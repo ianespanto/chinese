@@ -1,0 +1,17 @@
+@font-face {
+	font-family: 'KaiTi_GB2312';
+	src: url('../assets/fonts/8a1e9fe86f7a9489ec091ec4b78af185.eot');
+	src: url('../assets/fonts/8a1e9fe86f7a9489ec091ec4b78af185.eot?#iefix') format('embedded-opentype'),
+		url('../assets/fonts/8a1e9fe86f7a9489ec091ec4b78af185.woff2') format('woff2'),
+		url('../assets/fonts/8a1e9fe86f7a9489ec091ec4b78af185.woff') format('woff'),
+		url('../assets/fonts/8a1e9fe86f7a9489ec091ec4b78af185.ttf') format('truetype'),
+		url('../assets/fonts/8a1e9fe86f7a9489ec091ec4b78af185.svg#KaiTi_GB2312') format('svg');
+	font-display: block;
+	font-style: normal;
+	font-weight: 400;
+}
+
+/* font utility */
+.font-kaiti {
+	font-family: var(--font-kaiti), serif;
+}

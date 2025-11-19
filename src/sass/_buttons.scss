@@ -1,0 +1,66 @@
+.btn {
+	appearance: none;
+	border: none;
+	padding: 12px 15px;
+	border-radius: 50px;
+	cursor: pointer;
+	font-weight: 600;
+	font-size: 16px;
+	line-height: 1.2;
+	width: 100%;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+	font-family: var(--font-sans);
+	border: 2px solid var(--primary);
+	user-select: none;
+	@extend .add-shadow;
+
+	&:hover {
+		border-color: var(--primary-dark);
+	}
+
+	&:active {
+		border-color: var(--primary-darker);
+	}
+
+	&--primary {
+		background-color: var(--primary);
+		color: var(--white);
+
+		&:hover {
+			background-color: var(--primary-dark);
+		}
+
+		&:active {
+			background-color: var(--primary-darker);
+		}
+
+		&:disabled {
+			background-color: var(--disabled);
+			border-color: var(--disabled);
+			cursor: not-allowed;
+
+			&:hover {
+				background-color: var(--disabled);
+				border-color: var(--disabled);
+			}
+		}
+	}
+
+	&--secondary {
+		background-color: var(--white);
+		color: var(--primary);
+
+		&:hover {
+			color: var(--primary-dark);
+			background-color: var(--primary-light);
+		}
+
+		&:active {
+			color: var(--primary-darker);
+			background-color: var(--primary-light-darker);
+		}
+	}
+}

@@ -1,0 +1,67 @@
+/* practice sheet scope */
+#practice-sheet {
+	user-select: none;
+	margin: 0 auto;
+	@extend .add-shadow;
+	border-radius: var(--radius);
+	border: 1px solid var(--border);
+
+	.pdf-page {
+		background-color: var(--white);
+		padding: 0;
+		display: flex;
+		flex-direction: column;
+		overflow: hidden;
+	}
+
+	.page-separator {
+		height: 1px;
+		border-bottom: 2px dashed var(--border);
+	}
+
+	.pinyin-text {
+		font-size: 9pt;
+		line-height: 12pt;
+		height: 15pt;
+	}
+
+	.grid-container {
+		width: 100%;
+		border-color: var(--primary);
+		border-style: solid;
+	}
+
+	.grid-box {
+		box-sizing: border-box;
+		flex-shrink: 0;
+		border-color: var(--primary);
+		border-style: solid;
+	}
+
+	.char-row {
+		display: flex;
+		flex-direction: row;
+	}
+
+	.char-block {
+		margin-bottom: 0;
+		page-break-inside: avoid;
+	}
+
+	.spacing-block {
+		width: 100%;
+	}
+
+	.char-overlay-text {
+		position: absolute;
+		inset: 0;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		pointer-events: none;
+		user-select: none;
+		font-size: 46pt;
+		line-height: 1;
+		color: var(--black);
+	}
+}
