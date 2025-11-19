@@ -26,6 +26,7 @@
 
 	--error: #f25c54;
 	--text: #2d3747;
+	--text-muted: #6c757d;
 	--text-translucent: rgba(45, 55, 71, 0.7);
 
 	--border: #ced4da;
@@ -105,8 +106,9 @@ body {
 
 .hidden-mobile-msg {
 	text-align: center;
-	color: #6c757d;
-	margin-top: 10px;
+	color: var(--text-muted);
+	margin-top: 30px;
+	font-size: 14px;
 
 	@media (min-width: 861px) {
 		display: none;
@@ -129,4 +131,11 @@ body {
 .input-style,
 .custom-checkbox {
 	-webkit-tap-highlight-color: transparent;
+}
+
+.footer-credit {
+	margin: 30px 0 20px;
+	text-align: center;
+	color: var(--text-muted);
+	font-size: 14px;
 }

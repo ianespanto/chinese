@@ -1,5 +1,6 @@
 {
 	"name": "chinese-learning",
+	"homepage": "https://ianespanto.github.io/chinese",
 	"version": "0.1.0",
 	"private": true,
 	"dependencies": {

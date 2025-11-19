@@ -375,10 +375,10 @@ function PracticeSheet() {
 		};
 
 		try {
-			const FONT_URL = '/assets/fonts/8a1e9fe86f7a9489ec091ec4b78af185.ttf'; // Kaiti (Chinese)
+			const FONT_URL = '/chinese/assets/fonts/8a1e9fe86f7a9489ec091ec4b78af185.ttf'; // Kaiti (Chinese)
 			const FONT_KEY = 'KaiTi_GB2312';
 
-			const FONT_PINYIN_URL = '/assets/fonts/InterTight-Regular.ttf';
+			const FONT_PINYIN_URL = '/chinese/assets/fonts/InterTight-Regular.ttf';
 			const FONT_PINYIN_KEY = 'InterTight';
 
 			// create PDF instance early so we can register font on the instance if supported
@@ -719,23 +719,15 @@ function PracticeSheet() {
 					isLoading={isPinyinLoading}
 				/>
 			</div>
-			<p className={h.styles['hidden-mobile-msg']}>Preview unavailable on small screens.</p>
+			<p className={h.styles['hidden-mobile-msg']}>Preview unavailable on small screens</p>
 
-			{isPreviewUpdating && (
-				<div
-					className="updating-preview"
-					style={{
-						textAlign: 'center',
-						marginBottom: '8px',
-						color: 'var(--muted, #666)',
-						fontStyle: 'italic',
-						fontSize: '13px',
-					}}
-					aria-live="polite"
-				>
-					Updating preview...
-				</div>
-			)}
+			<div className={`preview-updating-container ${h.styles['off-screen-mobile']}`}>
+				{isPreviewUpdating && (
+					<div className="preview-updating" aria-live="polite">
+						Updating preview...
+					</div>
+				)}
+			</div>
 
 			{/* PREVIEW CONTAINER */}
 			<div>
@@ -749,6 +741,10 @@ function PracticeSheet() {
 						</React.Fragment>
 					))}
 				</div>
+			</div>
+
+			<div className="footer-credit">
+				<p>&copy; {new Date().getFullYear()} Ian Espanto</p>
 			</div>
 		</div>
 	);
