@@ -1,7 +1,7 @@
 {
   "files": {
-    "main.css": "/chinese/static/css/main.d92afc79.css",
-    "main.js": "/chinese/static/js/main.9dd2415f.js",
+    "main.css": "/chinese/static/css/main.616d33a6.css",
+    "main.js": "/chinese/static/js/main.3054f074.js",
     "static/js/239.7d9cd515.chunk.js": "/chinese/static/js/239.7d9cd515.chunk.js",
     "static/js/977.6e3938fb.chunk.js": "/chinese/static/js/977.6e3938fb.chunk.js",
     "static/js/455.3401d7de.chunk.js": "/chinese/static/js/455.3401d7de.chunk.js",
@@ -38,14 +38,14 @@
     "static/media/inter-tight-v9-latin_latin-ext_vietnamese-regular.woff2": "/chinese/static/media/inter-tight-v9-latin_latin-ext_vietnamese-regular.252baeb22bb095ef507a.woff2",
     "static/media/inter-tight-v9-latin_latin-ext_vietnamese-100.woff2": "/chinese/static/media/inter-tight-v9-latin_latin-ext_vietnamese-100.d77d19c041ed4f46e8fb.woff2",
     "index.html": "/chinese/index.html",
-    "main.d92afc79.css.map": "/chinese/static/css/main.d92afc79.css.map",
-    "main.9dd2415f.js.map": "/chinese/static/js/main.9dd2415f.js.map",
+    "main.616d33a6.css.map": "/chinese/static/css/main.616d33a6.css.map",
+    "main.3054f074.js.map": "/chinese/static/js/main.3054f074.js.map",
     "239.7d9cd515.chunk.js.map": "/chinese/static/js/239.7d9cd515.chunk.js.map",
     "977.6e3938fb.chunk.js.map": "/chinese/static/js/977.6e3938fb.chunk.js.map",
     "455.3401d7de.chunk.js.map": "/chinese/static/js/455.3401d7de.chunk.js.map"
   },
   "entrypoints": [
-    "static/css/main.d92afc79.css",
-    "static/js/main.9dd2415f.js"
+    "static/css/main.616d33a6.css",
+    "static/js/main.3054f074.js"
   ]
 }
