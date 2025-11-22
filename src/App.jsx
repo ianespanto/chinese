@@ -263,9 +263,17 @@ function PracticeSheet() {
 		{ value: 'high', label: 'Dark' },
 	];
 
+	// NEW: Trace Count and Rows Per Char options (for StyledSelect)
+	const traceCountOptions = Array.from({ length: 11 }, (_, i) => ({ value: i, label: String(i) }));
+	const rowsPerCharOptions = Array.from({ length: 5 }, (_, i) => ({ value: i + 1, label: String(i + 1) }));
+
 	const getTopSpacingLabel = option => option.label;
 	const getGridTypeLabel = option => option.label;
 	const getTraceOpacityLabel = option => option.label;
+
+	// New label getters for the new selects
+	const getTraceCountLabel = option => option.label;
+	const getRowsPerCharLabel = option => option.label;
 
 	// --- PAGINATION LOGIC (based on debouncedCharacters to avoid frequent recompute) ---
 	const paginatedBlocks = useMemo(() => {
@@ -325,12 +333,16 @@ function PracticeSheet() {
 		if (!isLoaded || isGenerating || paginatedBlocks.length === 0) return;
 		setIsGenerating(true);
 
-		// helper: convert ArrayBuffer -> base64
+		// helper: convert ArrayBuffer -> base64 (safely in chunks)
 		const arrayBufferToBase64 = buffer => {
-			let binary = '';
 			const bytes = new Uint8Array(buffer);
-			const len = bytes.byteLength;
-			for (let i = 0; i < len; i++) binary += String.fromCharCode(bytes[i]);
+			const chunkSize = 0x8000; // 32KB chunks
+			let binary = '';
+			for (let i = 0; i < bytes.length; i += chunkSize) {
+				const chunk = bytes.subarray(i, i + chunkSize);
+				// apply on small enough chunk to avoid call stack limits
+				binary += String.fromCharCode.apply(null, chunk);
+			}
 			return btoa(binary);
 		};
 
@@ -375,10 +387,13 @@ function PracticeSheet() {
 		};
 
 		try {
-			const FONT_URL = '/chinese/assets/fonts/8a1e9fe86f7a9489ec091ec4b78af185.ttf'; // Kaiti (Chinese)
+			// Use PUBLIC_URL so paths work both in dev and when deployed under a subpath
+			const PUBLIC_URL = (typeof process !== 'undefined' && process.env && process.env.PUBLIC_URL) || '';
+
+			const FONT_URL = `${PUBLIC_URL}/assets/fonts/8a1e9fe86f7a9489ec091ec4b78af185.ttf`; // Kaiti (Chinese)
 			const FONT_KEY = 'KaiTi_GB2312';
 
-			const FONT_PINYIN_URL = '/chinese/assets/fonts/InterTight-Regular.ttf';
+			const FONT_PINYIN_URL = `${PUBLIC_URL}/assets/fonts/InterTight-Regular.ttf`;
 			const FONT_PINYIN_KEY = 'InterTight';
 
 			// create PDF instance early so we can register font on the instance if supported
@@ -528,7 +543,7 @@ function PracticeSheet() {
 				}
 			}
 
-			pdf.save('chinese-practice-sheet-vector.pdf');
+			pdf.save('chinese-worksheet.pdf');
 		} catch (err) {
 			console.error('Vector PDF generation failed:', err);
 		} finally {
@@ -594,6 +609,8 @@ function PracticeSheet() {
 	const characterCount = characters.length;
 	const isLimitReached = characterCount >= MAX_CHARACTERS;
 
+	const pagesCount = paginatedBlocks.length;
+
 	return (
 		<div className={h.styles['app-container']}>
 			<NotificationPopUp message={notificationMessage} clearMessage={clearNotificationMessage} />
@@ -611,12 +628,18 @@ function PracticeSheet() {
 						onCompositionStart={handleCompositionStart}
 						onCompositionEnd={handleCompositionEnd}
 						className={h.styles['input-style']}
-						placeholder={`Enter up to ${MAX_CHARACTERS} characters you would like to practise writing`}
+						placeholder={`Enter up to ${MAX_CHARACTERS} characters`}
 						rows={1}
 					/>
-					{/* NEW Character Counter */}
-					<div className={`${h.styles['char-counter']} ${isLimitReached ? 'limit-reached' : ''}`}>
-						Character Count: {characterCount} / {MAX_CHARACTERS} Max
+					{/* Character Counter */}
+					<div className="counters-container">
+						{/* Live page count indicator (aria-live so screen readers are notified) */}
+						<div className="page-count-indicator" aria-live="polite" aria-atomic="true">
+							{pagesCount} Page{pagesCount === 1 ? '' : 's'}
+						</div>
+						<div className={`${h.styles['char-counter']} ${isLimitReached ? 'limit-reached' : ''}`}>
+							{characterCount} / {MAX_CHARACTERS} Characters
+						</div>
 					</div>
 				</div>
 
@@ -647,33 +670,23 @@ function PracticeSheet() {
 
 				{/* TRACEABLE COPIES */}
 				<div>
-					<label htmlFor="traceable-copies" className={h.styles['label-style']}>
-						Traceable Copies
-					</label>
-					<input
-						id="traceable-copies"
-						type="number"
-						min="0"
-						max="10"
+					<label className={h.styles['label-style']}>Traceable Copies</label>
+					<StyledSelect
 						value={traceCount}
-						onChange={e => setTraceCount(Math.min(10, Math.max(0, Number(e.target.value))))}
-						className={h.styles['input-style']}
+						onChange={val => setTraceCount(Number(val))}
+						options={traceCountOptions}
+						labelGetter={getTraceCountLabel}
 					/>
 				</div>
 
 				{/* ROWS PER CHAR */}
 				<div>
-					<label htmlFor="rows-per-char" className={h.styles['label-style']}>
-						Rows per Char
-					</label>
-					<input
-						id="rows-per-char"
-						type="number"
-						min="1"
-						max="5"
+					<label className={h.styles['label-style']}>Rows per Char</label>
+					<StyledSelect
 						value={rowsPerChar}
-						onChange={e => setRowsPerChar(Math.min(5, Math.max(1, Number(e.target.value))))}
-						className={h.styles['input-style']}
+						onChange={val => setRowsPerChar(Number(val))}
+						options={rowsPerCharOptions}
+						labelGetter={getRowsPerCharLabel}
 					/>
 				</div>
 
@@ -711,26 +724,29 @@ function PracticeSheet() {
 				</div>
 
 				{/* PINYIN CHECKBOX (CUSTOM COMPONENT) */}
-				<CustomCheckbox
-					id="showHeaderInfo"
-					label={pinyinCheckboxLabel}
-					checked={showHeaderInfo}
-					onChange={setShowHeaderInfo}
-					isLoading={isPinyinLoading}
-				/>
-			</div>
-			<p className={h.styles['hidden-mobile-msg']}>Preview unavailable on small screens</p>
-
-			<div className={`preview-updating-container ${h.styles['off-screen-mobile']}`}>
-				{isPreviewUpdating && (
-					<div className="preview-updating" aria-live="polite">
-						Updating preview...
-					</div>
-				)}
+				<div className="checkbox-wrapper">
+					<CustomCheckbox
+						id="showHeaderInfo"
+						label={pinyinCheckboxLabel}
+						checked={showHeaderInfo}
+						onChange={setShowHeaderInfo}
+						isLoading={isPinyinLoading}
+					/>
+				</div>
 			</div>
 
 			{/* PREVIEW CONTAINER */}
 			<div>
+				<p className={h.styles['hidden-mobile-msg']}>Preview unavailable on small screens</p>
+
+				<div className={`preview-updating-container ${h.styles['off-screen-mobile']}`}>
+					{isPreviewUpdating && (
+						<div className="preview-updating" aria-live="polite">
+							Updating preview...
+						</div>
+					)}
+				</div>
+
 				<div id={h.styles['practice-sheet']} ref={sheetRef} className={h.styles['off-screen-mobile']}>
 					{paginatedBlocks.map((page, pageIndex) => (
 						<React.Fragment key={pageIndex}>

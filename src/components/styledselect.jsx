@@ -6,12 +6,23 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import * as h from './helpers';
 
+// module-level counter used to generate stable instance ids
+let __styledSelectIdCounter = 0;
+
 export default function StyledSelect({ value, onChange, options, labelGetter }) {
 	const [isOpen, setIsOpen] = useState(false);
 	const [highlightedIndex, setHighlightedIndex] = useState(-1);
 	const containerRef = useRef(null);
 	const buttonRef = useRef(null);
 	const listRef = useRef(null);
+
+	// stable instance id for coordinating open/close across all instances
+	const instanceIdRef = useRef(null);
+	if (instanceIdRef.current === null) {
+		__styledSelectIdCounter += 1;
+		instanceIdRef.current = `styled-select-${__styledSelectIdCounter}`;
+	}
+	const instanceId = instanceIdRef.current;
 
 	const selectedOption = options.find(opt => opt.value === value);
 	const selectedLabel = selectedOption
@@ -30,6 +41,19 @@ export default function StyledSelect({ value, onChange, options, labelGetter }) 
 		document.addEventListener('mousedown', handleClickOutside);
 		return () => document.removeEventListener('mousedown', handleClickOutside);
 	}, []);
+
+	// Listen for other selects opening and close this one if it's not the same instance.
+	useEffect(() => {
+		const handler = e => {
+			// If another select opened, close this one
+			if (e && e.detail && e.detail.id !== instanceId) {
+				setIsOpen(false);
+				setHighlightedIndex(-1);
+			}
+		};
+		window.addEventListener('styled-select-open', handler);
+		return () => window.removeEventListener('styled-select-open', handler);
+	}, [instanceId]);
 
 	// When opening, set initial highlighted index to selected option or 0
 	useEffect(() => {
@@ -62,23 +86,50 @@ export default function StyledSelect({ value, onChange, options, labelGetter }) 
 		}, 0);
 	};
 
+	// Helper to open this select and notify other instances
+	const openThisSelect = () => {
+		// notify others first so they close
+		try {
+			const ev = new CustomEvent('styled-select-open', { detail: { id: instanceId } });
+			window.dispatchEvent(ev);
+		} catch (err) {
+			// fall back to older dispatch if needed
+			const ev = document.createEvent('CustomEvent');
+			ev.initCustomEvent('styled-select-open', true, true, { id: instanceId });
+			window.dispatchEvent(ev);
+		}
+		// then open self
+		setIsOpen(true);
+	};
+
+	// Toggles open state — when opening, notify others; when closing, just close.
+	const toggleSelect = () => {
+		if (!isOpen) {
+			openThisSelect();
+		} else {
+			setIsOpen(false);
+		}
+	};
+
 	const handleButtonKeyDown = e => {
 		if (e.key === 'Enter' || e.key === ' ') {
 			e.preventDefault();
-			setIsOpen(prev => !prev);
+			// toggle open/close using our centralized toggle
+			toggleSelect();
 			return;
 		}
 		if (e.key === 'ArrowDown') {
 			e.preventDefault();
+			// open and highlight current or first
+			openThisSelect();
 			const selIdx = options.findIndex(opt => opt.value === value);
-			setIsOpen(true);
 			setHighlightedIndex(selIdx >= 0 ? selIdx : 0);
 			return;
 		}
 		if (e.key === 'ArrowUp') {
 			e.preventDefault();
+			openThisSelect();
 			const selIdx = options.findIndex(opt => opt.value === value);
-			setIsOpen(true);
 			setHighlightedIndex(selIdx >= 0 ? selIdx : options.length - 1);
 			return;
 		}
@@ -159,7 +210,7 @@ export default function StyledSelect({ value, onChange, options, labelGetter }) 
 			<div
 				ref={buttonRef}
 				className={h.styles['styled-select-button']}
-				onClick={() => setIsOpen(prev => !prev)}
+				onClick={() => toggleSelect()}
 				onKeyDown={handleButtonKeyDown}
 				tabIndex="0"
 				aria-haspopup="listbox"
