@@ -387,13 +387,10 @@ function PracticeSheet() {
 		};
 
 		try {
-			// Use PUBLIC_URL so paths work both in dev and when deployed under a subpath
-			const PUBLIC_URL = (typeof process !== 'undefined' && process.env && process.env.PUBLIC_URL) || '';
-
-			const FONT_URL = `${PUBLIC_URL}/assets/fonts/8a1e9fe86f7a9489ec091ec4b78af185.ttf`; // Kaiti (Chinese)
+			const FONT_URL = '/chinese/assets/fonts/8a1e9fe86f7a9489ec091ec4b78af185.ttf'; // Kaiti (Chinese)
 			const FONT_KEY = 'KaiTi_GB2312';
 
-			const FONT_PINYIN_URL = `${PUBLIC_URL}/assets/fonts/InterTight-Regular.ttf`;
+			const FONT_PINYIN_URL = '/chinese/assets/fonts/InterTight-Regular.ttf';
 			const FONT_PINYIN_KEY = 'InterTight';
 
 			// create PDF instance early so we can register font on the instance if supported
