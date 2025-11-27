@@ -2,7 +2,7 @@
 // Custom Checkbox Component
 // ---------------------------------------------------------------------
 
-import * as h from './helpers';
+import * as h from './Helpers';
 
 export default function CustomCheckbox({ id, label, checked, onChange, isLoading }) {
 	const handleToggle = () => onChange(!checked);

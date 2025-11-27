@@ -1,51 +1,13 @@
 @import 'reset';
+@import 'variables';
 @import 'typography';
 @import 'buttons';
 @import 'checkbox';
 @import 'select';
-@import 'practicesheet';
+@import 'practice-sheet';
 @import 'controls';
+@import 'stroke-order-overlay';
 @import 'notification';
-
-/* design tokens */
-:root {
-	/* fonts */
-	--font-sans: 'Inter Tight', 'Noto Sans SC', sans-serif;
-	--font-kaiti: 'KaiTi_GB2312', sans-serif;
-
-	/* colors */
-	--white: #ffffff;
-	--black: #000000;
-
-	--primary: #56ab91;
-	--primary-dark: #358f80;
-	--primary-darker: #14746f;
-	--primary-light: #f2faf8;
-	--primary-light-darker: #e6f3ef;
-
-	--error: #f25c54;
-	--text: #2d3747;
-	--text-muted: #6c757d;
-	--text-translucent: rgba(45, 55, 71, 0.7);
-
-	--border: #ced4da;
-	--border-strong: #999999;
-	--select-hover: #e9ecef;
-	--light-1: #fafbfc;
-	--light-2: #f7f8fa;
-	--light-3: #f5f6f8;
-	--disabled: #adb5bd;
-	--shadow: rgba(45, 55, 71, 0.08);
-	--focus-shadow: rgba(0, 123, 255, 0.25);
-
-	/* ui */
-	--bg: var(--white);
-	--bg-translucent: rgba(255, 255, 255, 0.9);
-
-	/* spacing / radius */
-	--gap: 16px;
-	--radius: 10px;
-}
 
 /* globals */
 html,

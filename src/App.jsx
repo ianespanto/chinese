@@ -1,10 +1,11 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { jsPDF } from 'jspdf';
-import StyledSelect from './components/styledselect';
-import CustomCheckbox from './components/customcheckbox';
-import NotificationPopUp from './components/notificationpopup';
-import GridBox from './components/gridbox';
-import * as h from './components/helpers';
+import StyledSelect from './components/StyledSelect';
+import CustomCheckbox from './components/CustomCheckbox';
+import NotificationPopUp from './components/NotificationPopUp';
+import GridBox from './components/GridBox';
+import StrokeOrderPopup from './components/StrokeOrderPopup';
+import * as h from './components/Helpers';
 
 // --- PDF DIMENSION CONSTANTS IN POINTS (pt) ---
 const MARGIN_PT = 18;
@@ -87,10 +88,12 @@ function PracticeSheet() {
 
 	const [isComposing, setIsComposing] = useState(false);
 	const [charInfoMap, setCharInfoMap] = useState({});
+	const [contextPinyinArray, setContextPinyinArray] = useState([]);
 	const [isPinyinLoading, setIsPinyinLoading] = useState(false);
 	const [isGenerating, setIsGenerating] = useState(false);
 	const [isLoaded, setIsLoaded] = useState(true);
 	const [notificationMessage, setNotificationMessage] = useState(null);
+	const [selectedChar, setSelectedChar] = useState(null);
 
 	const sheetRef = useRef(null);
 
@@ -133,7 +136,7 @@ function PracticeSheet() {
 	// debounce characters -> debouncedCharacters (skip while composing)
 	useEffect(() => {
 		if (isComposing) return; // don't update while IME composition in progress
-		const id = setTimeout(() => setDebouncedCharacters(characters), 1000); // 1s debounce to reduce CPU churn
+		const id = setTimeout(() => setDebouncedCharacters(characters), 500); // debounce to reduce CPU churn
 		return () => clearTimeout(id);
 	}, [characters, isComposing]);
 
@@ -147,22 +150,30 @@ function PracticeSheet() {
 			const uniqueChineseChars = Array.from(new Set(chineseChars));
 
 			if (uniqueChineseChars.length === 0) {
-				if (!cancelled) setCharInfoMap({});
+				if (!cancelled) {
+					setCharInfoMap({});
+					setContextPinyinArray([]);
+				}
 				return;
 			}
 
 			if (!cancelled) setIsPinyinLoading(true);
 			try {
-				const map = await h.generateCharInfo(uniqueChineseChars.join(''));
-				if (!map || typeof map !== 'object') {
-					console.debug('generateCharInfo returned unexpected result', map);
+				const result = await h.generateCharInfo(debouncedCharacters);
+				if (!result || typeof result !== 'object') {
+					console.debug('generateCharInfo returned unexpected result', result);
 					setCharInfoMap({});
+					setContextPinyinArray([]);
 				} else {
-					setCharInfoMap(map);
+					setCharInfoMap(result.charMap || {});
+					setContextPinyinArray(result.contextArray || []);
 				}
 			} catch (err) {
 				console.warn('generateCharInfo failed', err);
-				if (!cancelled) setCharInfoMap({});
+				if (!cancelled) {
+					setCharInfoMap({});
+					setContextPinyinArray([]);
+				}
 			} finally {
 				if (!cancelled) setIsPinyinLoading(false);
 			}
@@ -294,12 +305,13 @@ function PracticeSheet() {
 				currentPageHeight = 0;
 			}
 
-			const info = charInfoMap[char] || { pinyin: '' };
+			const info = charInfoMap[char] || { pinyin: '', pinyinAll: '' };
 
 			pages[pages.length - 1].push({
 				type: 'char',
 				char,
 				pinyin: info.pinyin,
+				pinyinAll: info.pinyinAll || info.pinyin,
 				key: `char-${char}-${charIndex}`,
 			});
 			currentPageHeight += blockHeight;
@@ -438,7 +450,8 @@ function PracticeSheet() {
 					if (showHeaderInfo) {
 						const headerTop = cursorY;
 						const headerHeight = HEADER_AREA_HEIGHT_PT;
-						if (block.pinyin) {
+						const pinyinToShow = block.pinyinAll || block.pinyin;
+						if (pinyinToShow) {
 							if (pinyinRegistered) {
 								pdf.setFont(FONT_PINYIN_KEY, 'normal');
 							} else {
@@ -447,7 +460,7 @@ function PracticeSheet() {
 							pdf.setFontSize(10);
 							pdf.setTextColor(0, 0, 0);
 							const pinyinInset = 2;
-							pdf.text(block.pinyin, originX + pinyinInset, headerTop + headerHeight / 2 + 3, {
+							pdf.text(pinyinToShow, originX + pinyinInset, headerTop + headerHeight / 2 + 3, {
 								align: 'left',
 							});
 						}
@@ -469,18 +482,18 @@ function PracticeSheet() {
 							pdf.rect(colX, cursorY, bw, bh, 'S');
 
 							// inner guide lines (dashed)
-							pdf.setLineWidth(0.35);
+							pdf.setLineWidth(1);
 							pdf.setDrawColor('#56ab91');
-							pdf.setLineDash([1.5, 1.5], 0);
+							pdf.setLineDash([3, 3], 0);
+
+							if (gridType === 'mi-zi-ge' || gridType === 'tian-zi-ge') {
+								pdf.line(colX + bw / 2, cursorY, colX + bw / 2, cursorY + bh);
+								pdf.line(colX, cursorY + bh / 2, colX + bw, cursorY + bh / 2);
+							}
 
 							if (gridType === 'mi-zi-ge') {
 								pdf.line(colX, cursorY, colX + bw, cursorY + bh);
 								pdf.line(colX, cursorY + bh, colX + bw, cursorY);
-								pdf.line(colX + bw / 2, cursorY, colX + bw / 2, cursorY + bh);
-								pdf.line(colX, cursorY + bh / 2, colX + bw, cursorY + bh / 2);
-							} else if (gridType === 'tian-zi-ge') {
-								pdf.line(colX + bw / 2, cursorY, colX + bw / 2, cursorY + bh);
-								pdf.line(colX, cursorY + bh / 2, colX + bw, cursorY + bh / 2);
 							}
 
 							// reset dash for subsequent drawing
@@ -563,7 +576,9 @@ function PracticeSheet() {
 
 					{/* Header Display Row (Pinyin) */}
 					<div style={{ overflow: 'hidden', height: showHeaderInfo ? `${HEADER_AREA_HEIGHT_PT}pt` : '0' }}>
-						{showHeaderInfo && <div className={h.styles['pinyin-text']}>{block.pinyin}</div>}
+						{showHeaderInfo && (
+							<div className={h.styles['pinyin-text']}>{block.pinyinAll || block.pinyin}</div>
+						)}
 					</div>
 
 					{/* Grid Rows */}
@@ -611,9 +626,14 @@ function PracticeSheet() {
 	return (
 		<div className={h.styles['app-container']}>
 			<NotificationPopUp message={notificationMessage} clearMessage={clearNotificationMessage} />
-
+			<StrokeOrderPopup
+				character={selectedChar?.char}
+				pinyin={selectedChar?.pinyin}
+				gridType={gridType}
+				onClose={() => setSelectedChar(null)}
+			/>{' '}
 			<h1 className={h.styles['title']}>
-				<span>Chinese Worksheet</span>
+				<span>Chinese Toolkit</span>
 			</h1>
 			{/* CONTROLS */}
 			<div className={h.styles['controls-panel']}>
@@ -639,7 +659,27 @@ function PracticeSheet() {
 						</div>
 					</div>
 				</div>
-
+				{/* Live inline pinyin preview (ruby) beneath the textarea */}
+				{contextPinyinArray.length > 0 && (
+					<div className={`inline-pinyin-preview ${h.styles['font-kaiti']}`} aria-live="polite">
+						{contextPinyinArray.map((item, i) => {
+							const isHanzi = /[\u4E00-\u9FFF]/.test(item.char);
+							if (!isHanzi) {
+								return <span key={`plain-${i}`}>{item.char}</span>;
+							}
+							return (
+								<ruby
+									key={`ruby-${i}`}
+									onClick={() => setSelectedChar({ char: item.char, pinyin: item.pinyin })}
+									title={`Click to view stroke order for ${item.char} (${item.pinyin})`}
+								>
+									<rb>{item.char}</rb>
+									<rt>{item.pinyin}</rt>
+								</ruby>
+							);
+						})}
+					</div>
+				)}{' '}
 				{/* GENERATE PDF BUTTON */}
 				<div className="generate-button-container">
 					<button
@@ -647,10 +687,9 @@ function PracticeSheet() {
 						disabled={isGenerating}
 						className="btn btn-generate btn--primary"
 					>
-						{isGenerating ? 'Generating...' : 'Generate PDF'}
+						{isGenerating ? 'Generating...' : 'Generate Worksheet'}
 					</button>
 				</div>
-
 				{/* CONTROL BUTTONS GROUP */}
 				<div className="control-buttons-container">
 					<div className="control-buttons-container__button control-buttons-container__button--sanitize">
@@ -664,7 +703,6 @@ function PracticeSheet() {
 						</button>
 					</div>
 				</div>
-
 				{/* TRACEABLE COPIES */}
 				<div>
 					<label className={h.styles['label-style']}>Traceable Copies</label>
@@ -675,7 +713,6 @@ function PracticeSheet() {
 						labelGetter={getTraceCountLabel}
 					/>
 				</div>
-
 				{/* ROWS PER CHAR */}
 				<div>
 					<label className={h.styles['label-style']}>Rows per Char</label>
@@ -686,7 +723,6 @@ function PracticeSheet() {
 						labelGetter={getRowsPerCharLabel}
 					/>
 				</div>
-
 				{/* GRID TYPE - STYLED SELECT */}
 				<div>
 					<label className={h.styles['label-style']}>Grid Style</label>
@@ -697,7 +733,6 @@ function PracticeSheet() {
 						labelGetter={getGridTypeLabel}
 					/>
 				</div>
-
 				{/* NEW TRACE OPACITY CONTROL */}
 				<div>
 					<label className={h.styles['label-style']}>Trace Opacity</label>
@@ -708,7 +743,6 @@ function PracticeSheet() {
 						labelGetter={getTraceOpacityLabel}
 					/>
 				</div>
-
 				{/* NOTE SPACING - STYLED SELECT */}
 				<div>
 					<label className={h.styles['label-style']}>Spacing</label>
@@ -719,7 +753,6 @@ function PracticeSheet() {
 						labelGetter={getTopSpacingLabel}
 					/>
 				</div>
-
 				{/* PINYIN CHECKBOX (CUSTOM COMPONENT) */}
 				<div className="checkbox-wrapper">
 					<CustomCheckbox
@@ -731,7 +764,6 @@ function PracticeSheet() {
 					/>
 				</div>
 			</div>
-
 			{/* PREVIEW CONTAINER */}
 			<div>
 				<p className={h.styles['hidden-mobile-msg']}>Preview unavailable on small screens</p>
@@ -755,7 +787,6 @@ function PracticeSheet() {
 					))}
 				</div>
 			</div>
-
 			<div className="footer-credit">
 				<p>&copy; {new Date().getFullYear()} Ian Espanto</p>
 			</div>

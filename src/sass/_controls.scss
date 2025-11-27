@@ -38,7 +38,7 @@
 
 	#character-input {
 		resize: none;
-		height: 150px;
+		field-sizing: content;
 		font-size: 18px;
 
 		&::placeholder {
@@ -55,19 +55,59 @@
 		}
 	}
 
+	.inline-pinyin-preview {
+		grid-column: span 2;
+		font-size: 28px;
+		padding: 20px 20px 6px;
+		line-height: 1.8;
+		border: 1px solid var(--border);
+		@extend .add-shadow;
+		border-radius: var(--radius);
+		user-select: none;
+		background-color: var(--light-3);
+
+		ruby {
+			cursor: pointer;
+			transition: color 0.1s, background-color 0.1s;
+
+			&:hover {
+				color: var(--white);
+				background-color: var(--primary);
+
+				rt {
+					background-color: var(--primary);
+				}
+			}
+
+			// &:active {
+			// 	color: var(--white);
+			// 	background-color: var(--primary-dark);
+
+			// 	rt {
+			// 		background-color: var(--primary-dark);
+			// 	}
+			// }
+
+			rb {
+			}
+
+			rt {
+				padding: 0 3px;
+				line-height: 1;
+				display: ruby-text;
+				font-size: 50%;
+				text-align: start;
+				font-family: var(--font-sans);
+				transition: background-color 0.1s;
+			}
+		}
+	}
+
 	.control-buttons-container {
 		grid-column: span 2;
 		display: grid;
 		grid-template-columns: 1fr 1fr;
 		gap: 15px;
-
-		&__button {
-			&--sanitize {
-			}
-
-			&--save {
-			}
-		}
 	}
 
 	.generate-button-container {

@@ -3,7 +3,7 @@
 // ---------------------------------------------------------------------
 
 import React, { useState, useEffect } from 'react';
-import * as h from './helpers';
+import * as h from './Helpers';
 
 export default function NotificationPopUp({ message, clearMessage }) {
 	// Local state to control visibility and display content separately
