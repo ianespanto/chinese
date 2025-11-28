@@ -1,38 +1,56 @@
 import React, { useEffect, useRef, useState } from 'react';
 import HanziWriter from 'hanzi-writer';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faXmark, faRotateRight } from '@fortawesome/free-solid-svg-icons';
+import { faXmark, faArrowRotateRight } from '@fortawesome/free-solid-svg-icons';
+import CustomCheckbox from './CustomCheckbox';
 
 const StrokeOrderPopup = ({ character, pinyin, gridType, onClose }) => {
 	const writerRef = useRef(null);
 	const containerRef = useRef(null);
 	const gridRef = useRef(null);
 	const isMountedRef = useRef(true);
-	const [showReplay, setShowReplay] = useState(false);
-	const [isAnimating, setIsAnimating] = useState(false);
+	// Replay button is always shown; animation state not needed
+	const [showOutline, setShowOutline] = useState(true);
+
+	// Apply current outline visibility/color to the writer instance
+	const applyOutline = () => {
+		if (!writerRef.current) return;
+		const color = showOutline ? 'rgba(206,212,218,0.8)' : 'rgba(255,255,255,0)';
+		if (typeof writerRef.current.updateColor === 'function') {
+			writerRef.current.updateColor('outlineColor', color);
+		}
+		// Do not toggle showOutline at runtime; keep it rendered and control via color
+	};
 
 	const animateCharacter = () => {
 		if (!writerRef.current || !isMountedRef.current) return;
-		setShowReplay(false);
-		setIsAnimating(true);
+		try {
+			if (writerRef.current.cancelAnimation) {
+				writerRef.current.cancelAnimation();
+			} else if (writerRef.current.pauseAnimation) {
+				writerRef.current.pauseAnimation();
+			}
+		} catch {}
+
 		writerRef.current.animateCharacter({
 			onComplete: () => {
-				if (isMountedRef.current) {
-					setIsAnimating(false);
-					setShowReplay(true);
-				}
+				// no-op
 			},
 		});
 	};
+
+	// Separate effect to update outline without recreating writer.
+	// Include character/gridType in deps to catch toggles before writer init.
+	useEffect(() => {
+		applyOutline();
+	}, [showOutline, character, gridType]);
 
 	useEffect(() => {
 		if (!character || !containerRef.current) return;
 
 		isMountedRef.current = true;
 
-		// Reset state
-		setShowReplay(false);
-		setIsAnimating(false);
+		// No animation state to reset
 
 		// Clear container
 		containerRef.current.innerHTML = '';
@@ -42,29 +60,27 @@ const StrokeOrderPopup = ({ character, pinyin, gridType, onClose }) => {
 			height: 240,
 			padding: 0,
 			strokeColor: '#2d3747',
-			// radicalColor: '#56ab91',
+			// Always render outline; control visibility via outlineColor only
 			showOutline: true,
+			outlineColor: showOutline ? 'rgba(206,212,218,0.8)' : 'rgba(255,255,255,0)',
 			showCharacter: false,
-			charDataLoader: char => {
-				return fetch(`/chinese/hanzi-writer-data/${char}.json`).then(res => {
-					if (!res.ok) throw new Error(`Character ${char} not found`);
-					return res.json();
-				});
+			charDataLoader: async char => {
+				const res = await fetch(`/chinese/hanzi-writer-data/${char}.json`);
+				if (!res.ok) throw new Error(`Character ${char} not found`);
+				return await res.json();
 			},
 		});
 
 		writerRef.current = writer;
+		// Ensure outline state is applied even if user toggled quickly before init
+		applyOutline();
 
 		// Animate the character after a short delay
 		const animateTimeout = setTimeout(() => {
 			if (writerRef.current && isMountedRef.current) {
-				setIsAnimating(true);
 				writerRef.current.animateCharacter({
 					onComplete: () => {
-						if (isMountedRef.current) {
-							setIsAnimating(false);
-							setShowReplay(true);
-						}
+						// no-op
 					},
 				});
 			}
@@ -83,27 +99,42 @@ const StrokeOrderPopup = ({ character, pinyin, gridType, onClose }) => {
 	if (!character) return null;
 
 	return (
-		<div className="stroke-order-overlay" onClick={onClose}>
-			<div className="stroke-order-popup" onClick={e => e.stopPropagation()}>
-				<button className="stroke-order-close" onClick={onClose} aria-label="Close">
+		<div
+			className="stroke-order-overlay"
+			onClick={onClose}
+			role="dialog"
+			aria-modal="true"
+			aria-label={`Stroke order for ${character}`}
+			tabIndex={-1}
+		>
+			<div className="stroke-order-popup" onClick={e => e.stopPropagation()} role="document">
+				<button
+					className="stroke-order-close"
+					onClick={onClose}
+					aria-label="Close stroke order popup"
+					tabIndex={0}
+				>
 					<FontAwesomeIcon icon={faXmark} />
 				</button>
 				<div className="stroke-order-content">
-					<h3 className="stroke-order-title">{pinyin || character}</h3>
-					<div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>
-						<div style={{ position: 'relative', display: 'inline-block', width: 240, height: 240 }}>
+					<h3
+						className="stroke-order-title"
+						tabIndex={0}
+						aria-label={`Character: ${character}${pinyin ? ', Pinyin: ' + pinyin : ''}`}
+					>
+						{pinyin || character}
+					</h3>
+					<div className="stroke-order-animation-wrapper">
+						<div className="stroke-order-canvas-container">
 							{/* Grid SVG - behind character */}
 							<svg
 								ref={gridRef}
+								className="stroke-order-grid"
 								width="240"
 								height="240"
-								style={{
-									position: 'absolute',
-									top: 0,
-									left: 0,
-									pointerEvents: 'none',
-									zIndex: 0,
-								}}
+								role="img"
+								aria-label="Stroke order grid"
+								focusable="false"
 							>
 								{/* Outer border */}
 								<rect
@@ -128,6 +159,7 @@ const StrokeOrderPopup = ({ character, pinyin, gridType, onClose }) => {
 											stroke="#56ab91"
 											strokeWidth="1"
 											strokeDasharray="5,5"
+											aria-hidden="true"
 										/>
 										{/* Horizontal center line */}
 										<line
@@ -138,6 +170,7 @@ const StrokeOrderPopup = ({ character, pinyin, gridType, onClose }) => {
 											stroke="#56ab91"
 											strokeWidth="1"
 											strokeDasharray="5,5"
+											aria-hidden="true"
 										/>
 									</>
 								)}
@@ -153,6 +186,7 @@ const StrokeOrderPopup = ({ character, pinyin, gridType, onClose }) => {
 											stroke="#56ab91"
 											strokeWidth="1"
 											strokeDasharray="5,5"
+											aria-hidden="true"
 										/>
 										{/* Diagonal top-right to bottom-left */}
 										<line
@@ -163,6 +197,7 @@ const StrokeOrderPopup = ({ character, pinyin, gridType, onClose }) => {
 											stroke="#56ab91"
 											strokeWidth="1"
 											strokeDasharray="5,5"
+											aria-hidden="true"
 										/>
 									</>
 								)}
@@ -172,23 +207,32 @@ const StrokeOrderPopup = ({ character, pinyin, gridType, onClose }) => {
 							<div
 								ref={containerRef}
 								className="stroke-order-canvas"
-								style={{
-									position: 'relative',
-									zIndex: 1,
-								}}
+								role="img"
+								aria-label={`Stroke order animation for ${character}`}
+								tabIndex={0}
 							></div>
 						</div>
 					</div>
-					<div className="stroke-order-replay-container">
-						{showReplay && !isAnimating && (
-							<button
-								className="stroke-order-replay btn btn--primary btn--width-auto"
-								onClick={animateCharacter}
-							>
-								<FontAwesomeIcon icon={faRotateRight} />
-								<span>Replay</span>
-							</button>
-						)}
+					<div className="stroke-order-controls">
+						<CustomCheckbox
+							id="show-outline"
+							label="Show Trace"
+							checked={showOutline}
+							onChange={setShowOutline}
+							ariaLabel="Show or hide trace outline"
+							tabIndex={0}
+						/>
+					</div>
+					<div className="stroke-order-play-container">
+						<button
+							className="stroke-order-play btn btn--secondary btn--width-auto"
+							onClick={animateCharacter}
+							aria-label="Play stroke animation"
+							tabIndex={0}
+						>
+							<FontAwesomeIcon icon={faArrowRotateRight} />
+							<span>Play</span>
+						</button>
 					</div>
 				</div>
 			</div>

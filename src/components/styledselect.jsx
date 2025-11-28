@@ -76,15 +76,19 @@ export default function StyledSelect({ value, onChange, options, labelGetter }) 
 		}
 	}, [options, highlightedIndex]);
 
-	const handleOptionSelect = optionValue => {
-		onChange(optionValue);
-		setIsOpen(false);
-		setHighlightedIndex(-1); // reset highlight after selection
-		// return focus to button for accessibility
-		setTimeout(() => {
-			if (buttonRef.current) buttonRef.current.focus();
-		}, 0);
-	};
+	// eslint-disable-next-line react-hooks/exhaustive-deps
+	const handleOptionSelect = useCallback(
+		optionValue => {
+			onChange(optionValue);
+			setIsOpen(false);
+			setHighlightedIndex(-1); // reset highlight after selection
+			// return focus to button for accessibility
+			setTimeout(() => {
+				if (buttonRef.current) buttonRef.current.focus();
+			}, 0);
+		},
+		[onChange]
+	);
 
 	// Helper to open this select and notify other instances
 	const openThisSelect = () => {
@@ -193,7 +197,7 @@ export default function StyledSelect({ value, onChange, options, labelGetter }) 
 				}
 			}
 		},
-		[highlightedIndex, options]
+		[highlightedIndex, options, handleOptionSelect]
 	);
 
 	return (
@@ -206,6 +210,7 @@ export default function StyledSelect({ value, onChange, options, labelGetter }) 
 			aria-owns="select-options-list"
 			aria-controls="select-options-list"
 			aria-activedescendant={isOpen && highlightedIndex >= 0 ? `select-option-${highlightedIndex}` : undefined}
+			tabIndex="0"
 		>
 			<div
 				ref={buttonRef}

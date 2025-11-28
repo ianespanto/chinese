@@ -89,6 +89,7 @@ function PracticeSheet() {
 	const [isComposing, setIsComposing] = useState(false);
 	const [charInfoMap, setCharInfoMap] = useState({});
 	const [contextPinyinArray, setContextPinyinArray] = useState([]);
+	const characterInputRef = useRef(null);
 	const [isPinyinLoading, setIsPinyinLoading] = useState(false);
 	const [isGenerating, setIsGenerating] = useState(false);
 	const [isLoaded, setIsLoaded] = useState(true);
@@ -112,6 +113,7 @@ function PracticeSheet() {
 	const clearNotificationMessage = useCallback(() => setNotificationMessage(null), []);
 
 	// --- Initial Load (Load Preferences) ---
+	// eslint-disable-next-line react-hooks/exhaustive-deps
 	useEffect(() => {
 		if (!jsPDF) {
 			setIsLoaded(false);
@@ -131,6 +133,7 @@ function PracticeSheet() {
 				console.error('Could not parse saved preferences:', e);
 			}
 		}
+		// Intentionally run only once on mount; constants/jsPDF are stable.
 	}, []);
 
 	// debounce characters -> debouncedCharacters (skip while composing)
@@ -195,6 +198,13 @@ function PracticeSheet() {
 
 	const handleCharInput = e => {
 		const newValue = e.target.value;
+		// Auto-resize textarea height to fit content
+		try {
+			e.target.style.height = 'auto';
+			e.target.style.height = `${e.target.scrollHeight}px`;
+		} catch (err) {
+			// ignore (if element not available)
+		}
 		if (newValue.length <= MAX_CHARACTERS) {
 			setCharacters(newValue);
 			// If the user deletes characters and fixes the limit error:
@@ -212,6 +222,14 @@ function PracticeSheet() {
 			}
 		}
 	};
+
+	// Keep textarea height in sync when characters change programmatically
+	useEffect(() => {
+		if (!characterInputRef?.current) return;
+		const el = characterInputRef.current;
+		el.style.height = 'auto';
+		el.style.height = `${el.scrollHeight}px`;
+	}, [characters]);
 
 	// --- Control Button Handlers ---
 
@@ -640,6 +658,7 @@ function PracticeSheet() {
 				<div className="chracter-input-container">
 					<textarea
 						id="character-input"
+						ref={characterInputRef}
 						value={characters}
 						onChange={handleCharInput}
 						onCompositionStart={handleCompositionStart}
@@ -647,6 +666,7 @@ function PracticeSheet() {
 						className={h.styles['input-style']}
 						placeholder={`Enter up to ${MAX_CHARACTERS} characters`}
 						rows={1}
+						style={{ overflow: 'hidden', resize: 'none' }}
 					/>
 					{/* Character Counter */}
 					<div className="counters-container">
@@ -766,7 +786,7 @@ function PracticeSheet() {
 			</div>
 			{/* PREVIEW CONTAINER */}
 			<div>
-				<p className={h.styles['hidden-mobile-msg']}>Preview unavailable on small screens</p>
+				<p className={h.styles['hidden-mobile-msg']}>Worksheet preview on larger screens only</p>
 
 				<div className={`preview-updating-container ${h.styles['off-screen-mobile']}`}>
 					{isPreviewUpdating && (

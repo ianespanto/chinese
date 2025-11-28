@@ -1,13 +1,14 @@
-@import 'reset';
-@import 'variables';
-@import 'typography';
-@import 'buttons';
-@import 'checkbox';
-@import 'select';
-@import 'practice-sheet';
-@import 'controls';
-@import 'stroke-order-overlay';
-@import 'notification';
+@use 'reset';
+@use 'variables' as *;
+@use 'typography';
+@use 'buttons';
+@use 'checkbox';
+@use 'select';
+@use 'practice-sheet';
+@use 'controls';
+@use 'stroke-order-overlay';
+@use 'notification';
+@use 'mixins' as *;
 
 /* globals */
 html,
@@ -26,15 +27,6 @@ body {
 	* {
 		box-sizing: border-box;
 	}
-}
-
-.add-shadow {
-	box-shadow: 0 0 10px var(--shadow);
-}
-
-.focus-shadow {
-	box-shadow: 0 0 0 3px var(--focus-shadow);
-	outline: none;
 }
 
 /* layout */
@@ -70,6 +62,10 @@ body {
 	color: var(--text-muted);
 	margin-top: 30px;
 	font-size: 14px;
+	padding: 10px;
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	background-color: var(--light-3);
 
 	@media (min-width: 861px) {
 		display: none;

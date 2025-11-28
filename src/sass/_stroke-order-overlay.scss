@@ -1,3 +1,5 @@
+@use 'variables' as *;
+
 .stroke-order-overlay {
 	position: fixed;
 	top: 0;
@@ -24,7 +26,7 @@
 
 .stroke-order-popup {
 	background-color: var(--bg);
-	padding: 20px 30px;
+	padding: 20px;
 	border-radius: var(--radius);
 	box-shadow: 0 0 15px rgba(45, 55, 71, 0.5);
 	position: relative;
@@ -67,30 +69,104 @@
 
 .stroke-order-content {
 	text-align: center;
-	display: flex;
-	flex-direction: column;
+	display: grid;
+	grid-template-columns: 1fr 1fr;
 	gap: 20px;
 	align-items: center;
+	justify-items: center;
 }
 
 .stroke-order-title {
 	font-family: var(--font-sans);
-	font-weight: 300;
+	color: var(--text);
+	font-weight: 400;
 	font-size: 24px;
+	margin: 0;
+	letter-spacing: 0.03em;
+	grid-column: span 2;
+}
+
+.stroke-order-animation-wrapper {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 16px;
+	grid-column: span 2;
+}
+
+.stroke-order-canvas-container {
+	position: relative;
+	display: block;
+	width: 240px;
+	height: 240px;
+	margin: 0 auto;
+	/* Prevent layout shifts on mobile Safari */
+	flex-shrink: 0;
+}
+
+.stroke-order-grid {
+	position: absolute;
+	top: 0;
+	left: 0;
+	pointer-events: none;
+	z-index: 0;
+	display: block;
 }
 
 .stroke-order-canvas {
-	margin: 0 auto;
+	position: relative;
+	z-index: 1;
+	display: block;
+	margin: 0;
+	/* Prevent baseline shifts */
+	line-height: 0;
+
+	/* Lock dimensions to prevent shifts during animation */
+	width: 240px;
+	height: 240px;
+
+	svg {
+		display: block;
+		width: 240px !important;
+		height: 240px !important;
+	}
 }
 
-.stroke-order-replay-container {
-	height: 50px;
+.stroke-order-audio-btn {
+	background-color: var(--light-3);
+	border: none;
+	width: 36px;
+	height: 36px;
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	color: var(--text);
+	transition: background-color 0.2s, transform 0.1s;
+	font-size: 16px;
+
+	&:hover {
+		background-color: var(--primary);
+		color: white;
+	}
+
+	&:active {
+		transform: scale(0.95);
+	}
+}
+
+.stroke-order-controls {
 	display: flex;
 	justify-content: center;
 	align-items: center;
 }
 
-.stroke-order-replay {
+.stroke-order-play-container {
+	justify-self: flex-end;
+}
+
+.stroke-order-play {
 	display: flex;
-	gap: 8px;
+	gap: 5px;
 }

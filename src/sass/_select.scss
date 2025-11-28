@@ -1,3 +1,5 @@
+@use 'mixins' as *;
+
 /* styled select */
 .styled-select-container {
 	position: relative;
@@ -32,7 +34,7 @@
 
 		&:focus {
 			border-color: var(--border-strong);
-			@extend .focus-shadow;
+			@include focus-shadow();
 		}
 
 		/* Replace the Unicode glyph with a CSS triangle caret for consistent rendering */

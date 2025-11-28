@@ -1,8 +1,10 @@
+@use 'mixins' as *;
+
 /* practice sheet scope */
 #practice-sheet {
 	user-select: none;
 	margin: 0 auto;
-	@extend .add-shadow;
+	@include add-shadow();
 	border-radius: var(--radius);
 	border: 1px solid var(--border);
 
